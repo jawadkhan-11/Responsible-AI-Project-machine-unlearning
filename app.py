@@ -1001,15 +1001,15 @@ base_vals  = [BENCH[k][0]  for k in benchmark_names]
 final_vals = [BENCH[k][-1] for k in benchmark_names]
 
 fig_radar = go.Figure()
-for vals, name, color, fill in [
-    (base_vals,  "Baseline",  "#EF5350", "toself"),
-    (final_vals, "Unlearned", "#43A047", "toself"),
+for vals, name, color, fillcolor, fill in [
+    (base_vals,  "Baseline",  "#EF5350", "rgba(239,83,80,0.15)",  "toself"),
+    (final_vals, "Unlearned", "#43A047", "rgba(67,160,71,0.15)", "toself"),
 ]:
     fig_radar.add_trace(go.Scatterpolar(
         r=vals + [vals[0]], theta=cats + [cats[0]],
         name=name, fill=fill,
         line=dict(color=color, width=2),
-        fillcolor=color.replace("#", "rgba(") + ",0.12)" if "#" in color else color,
+        fillcolor=fillcolor,
     ))
 
 fig_radar.update_layout(
