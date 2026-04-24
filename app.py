@@ -619,6 +619,158 @@ SCROLL_JS = """
 st.components.v1.html(SCROLL_JS, height=0)
 
 # ─────────────────────────────────────────────────────────────────────────────
+# FLYING BROOM SCROLL TRACKER
+# ─────────────────────────────────────────────────────────────────────────────
+BROOM_JS = """
+<script>
+(function () {
+  function initBroom() {
+    try {
+      const pd = window.parent.document;
+
+      // Remove any existing broom to avoid duplicates on hot-reload
+      const existing = pd.getElementById('hp-broom-rider');
+      if (existing) existing.remove();
+
+      // Create the broom element
+      const broom = pd.createElement('div');
+      broom.id = 'hp-broom-rider';
+      broom.innerHTML = '🧹';
+      broom.style.cssText = `
+        position: fixed;
+        left: -60px;
+        top: 80px;
+        font-size: 2.4rem;
+        z-index: 99999;
+        pointer-events: none;
+        transition: top 0.12s linear;
+        filter: drop-shadow(0 0 8px rgba(79,195,247,0.7));
+        transform: scaleX(-1) rotate(-20deg);
+        user-select: none;
+      `;
+      pd.body.appendChild(broom);
+
+      // Trail/sparkle style
+      const style = pd.createElement('style');
+      style.textContent = `
+        @keyframes broomEntry {
+          0%   { left: -60px; opacity:0; }
+          15%  { left: 38px;  opacity:1; }
+          85%  { left: 38px;  opacity:1; }
+          100% { left: -60px; opacity:0; }
+        }
+        #hp-broom-rider {
+          animation: none;
+        }
+        #hp-broom-rider.flying {
+          animation: broomEntry 1.6s ease-in-out forwards;
+        }
+        @keyframes sparkle {
+          0%   { opacity:1; transform: translate(0,0) scale(1); }
+          100% { opacity:0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+        }
+        .broom-spark {
+          position: fixed;
+          pointer-events: none;
+          font-size: 0.7rem;
+          z-index: 99998;
+          animation: sparkle 0.8s ease-out forwards;
+        }
+      `;
+      pd.head.appendChild(style);
+
+      // Scrollable container inside Streamlit
+      const scrollEl = pd.querySelector('[data-testid="stAppViewBlockContainer"]')
+                    || pd.querySelector('section[tabindex="0"]')
+                    || pd.querySelector('.main')
+                    || pd.body;
+
+      let lastScroll = 0;
+      let broomTimeout = null;
+      let sparkleInterval = null;
+
+      function spawnSparkle(x, y) {
+        const sparks = ['✨','⭐','💫','🌟'];
+        const s = pd.createElement('span');
+        s.className = 'broom-spark';
+        s.innerHTML = sparks[Math.floor(Math.random() * sparks.length)];
+        const angle = (Math.random() * 80 + 50) * (Math.PI / 180);
+        const dist = 20 + Math.random() * 30;
+        s.style.left = (x + 35) + 'px';
+        s.style.top  = y + 'px';
+        s.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+        s.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+        pd.body.appendChild(s);
+        setTimeout(() => s.remove(), 850);
+      }
+
+      function showBroom(scrollPct) {
+        // Map scroll % (0-100) to vertical position (top: 80px → 90vh)
+        const minTop = 80;
+        const maxTop = Math.max(80, window.parent.innerHeight * 0.88);
+        const topPx  = minTop + (maxTop - minTop) * scrollPct;
+
+        broom.style.top = topPx + 'px';
+        broom.style.left = '38px';
+        broom.style.opacity = '1';
+
+        // Sparkles while visible
+        if (!sparkleInterval) {
+          sparkleInterval = setInterval(() => {
+            const rect = broom.getBoundingClientRect
+              ? { top: topPx, left: 38 }
+              : { top: topPx, left: 38 };
+            spawnSparkle(38, topPx - 10);
+          }, 220);
+        }
+
+        clearTimeout(broomTimeout);
+        broomTimeout = setTimeout(() => {
+          broom.style.transition = 'left 0.5s ease-in, opacity 0.5s ease';
+          broom.style.left = '-70px';
+          broom.style.opacity = '0';
+          clearInterval(sparkleInterval);
+          sparkleInterval = null;
+          setTimeout(() => {
+            broom.style.transition = 'top 0.12s linear';
+          }, 550);
+        }, 900);
+      }
+
+      function onScroll() {
+        const el   = scrollEl;
+        const total = el.scrollHeight - el.clientHeight || 1;
+        const pct   = Math.min(1, Math.max(0, el.scrollTop / total));
+
+        if (Math.abs(el.scrollTop - lastScroll) > 2) {
+          lastScroll = el.scrollTop;
+          showBroom(pct);
+        }
+      }
+
+      scrollEl.addEventListener('scroll', onScroll, { passive: true });
+
+      // Also listen on window in case Streamlit uses window scroll
+      window.parent.addEventListener('scroll', function() {
+        const total = pd.body.scrollHeight - window.parent.innerHeight || 1;
+        const pct   = Math.min(1, Math.max(0, window.parent.scrollY / total));
+        if (Math.abs(window.parent.scrollY - lastScroll) > 2) {
+          lastScroll = window.parent.scrollY;
+          showBroom(pct);
+        }
+      }, { passive: true });
+
+    } catch(e) {}
+  }
+
+  if (document.readyState === 'complete') { setTimeout(initBroom, 1200); }
+  else { window.addEventListener('load', () => setTimeout(initBroom, 1200)); }
+})();
+</script>
+"""
+st.components.v1.html(BROOM_JS, height=0)
+
+# ─────────────────────────────────────────────────────────────────────────────
 # HERO SECTION
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
