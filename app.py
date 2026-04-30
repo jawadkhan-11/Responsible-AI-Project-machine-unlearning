@@ -1179,7 +1179,159 @@ fig_radar.update_layout(
 st.plotly_chart(fig_radar, use_container_width=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# SECTION 8 — TECHNICAL STACK
+# SECTION 8 — INTERACTIVE UNLEARNING PLAYGROUND
+# ─────────────────────────────────────────────────────────────────────────────
+st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
+st.markdown("""
+<div class="sec-header">
+  <span class="sec-icon">🤖</span>
+  <h2 class="sec-title">Interactive Unlearning Playground</h2>
+  <div class="sec-line"></div>
+</div>
+<p style="color:var(--muted);font-size:0.92rem;margin-bottom:20px">
+  Type any prompt below — the unlearned model replaces Harry Potter-specific terms with their
+  generic counterparts using the anchor dictionary, simulating what the model would output
+  after the unlearning pipeline has been applied.
+</p>
+""", unsafe_allow_html=True)
+
+# ── Quick-load example prompts ────────────────────────────────────────────────
+st.markdown("""
+<p style="color:var(--bright);font-size:0.85rem;font-weight:600;margin-bottom:6px">
+  💡 Try an example prompt:
+</p>
+""", unsafe_allow_html=True)
+
+EXAMPLE_PROMPTS = [
+    "Describe what happens at Hogwarts School of Witchcraft and Wizardry.",
+    "Who is Harry Potter and why is he famous in the wizarding world?",
+    "Explain the rules of Quidditch and how the Golden Snitch works.",
+    "What are Horcruxes and why did Voldemort create them?",
+    "Tell me about the friendship between Harry, Ron, and Hermione.",
+    "What spell does Harry use most often and what does it do?",
+    "Describe the Sorting Hat ceremony at Hogwarts.",
+    "What is the significance of the Deathly Hallows?",
+    "Who are the members of Dumbledore's Army?",
+    "How does Harry Potter defeat Lord Voldemort in the end?",
+]
+
+ep_cols = st.columns(2)
+for i, ep in enumerate(EXAMPLE_PROMPTS[:6]):
+    with ep_cols[i % 2]:
+        if st.button(f"📝 {ep[:55]}…" if len(ep) > 55 else f"📝 {ep}",
+                     key=f"ep_{i}", use_container_width=True):
+            st.session_state["playground_input"] = ep
+
+# ── Input area ────────────────────────────────────────────────────────────────
+st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+user_prompt = st.text_area(
+    label="✏️ Enter your prompt:",
+    value=st.session_state.get("playground_input", ""),
+    height=110,
+    placeholder="e.g.  Harry Potter cast a spell at Hogwarts with his wand...",
+    key="playground_textarea",
+    help="Type anything referencing Harry Potter. The system replaces all known anchor terms.",
+)
+
+run_col, clear_col, _ = st.columns([1.5, 1, 5])
+with run_col:
+    run_btn = st.button("🚀 Run Unlearning", type="primary", use_container_width=True)
+with clear_col:
+    if st.button("🗑️ Clear", use_container_width=True):
+        st.session_state["playground_input"] = ""
+        st.rerun()
+
+# ── Unlearning engine ─────────────────────────────────────────────────────────
+def apply_unlearning(text: str, anchor_dict: dict) -> tuple[str, list[str]]:
+    """Replace anchor terms with generic counterparts; return new text + list of replacements made."""
+    import re
+    result = text
+    hits = []
+    # Sort by length descending so longer phrases match before substrings
+    for original, replacement in sorted(anchor_dict.items(), key=lambda x: -len(x[0])):
+        pattern = re.compile(re.escape(original), re.IGNORECASE)
+        if pattern.search(result):
+            hits.append((original, replacement))
+            result = pattern.sub(replacement, result)
+    return result, hits
+
+if run_btn and user_prompt.strip():
+    unlearned_text, replacements = apply_unlearning(user_prompt, ANCHOR_DICT)
+
+    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+    pg_l, pg_r = st.columns(2, gap="large")
+
+    with pg_l:
+        st.markdown("""
+        <div style="background:rgba(239,83,80,0.08);border:1px solid rgba(239,83,80,0.35);
+                    border-radius:10px;padding:18px 20px;min-height:160px">
+          <div style="color:#EF5350;font-size:0.78rem;font-weight:700;
+                      letter-spacing:0.08em;margin-bottom:10px">⚠️ BASELINE MODEL OUTPUT</div>
+        """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="color:#E8F4FD;font-size:0.95rem;line-height:1.65;white-space:pre-wrap">{user_prompt}</div>
+        """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with pg_r:
+        st.markdown("""
+        <div style="background:rgba(67,160,71,0.08);border:1px solid rgba(67,160,71,0.35);
+                    border-radius:10px;padding:18px 20px;min-height:160px">
+          <div style="color:#43A047;font-size:0.78rem;font-weight:700;
+                      letter-spacing:0.08em;margin-bottom:10px">✅ UNLEARNED MODEL OUTPUT</div>
+        """, unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="color:#E8F4FD;font-size:0.95rem;line-height:1.65;white-space:pre-wrap">{unlearned_text}</div>
+        """, unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── Replacements made ──────────────────────────────────────────────────────
+    if replacements:
+        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+        st.markdown("""
+        <p style="color:var(--bright);font-size:0.82rem;font-weight:600;margin-bottom:8px">
+          🔄 Anchor terms replaced:
+        </p>
+        """, unsafe_allow_html=True)
+        badge_html = " ".join([
+            f'<span style="background:rgba(46,117,182,0.18);border:1px solid rgba(46,117,182,0.4);'
+            f'border-radius:20px;padding:3px 12px;font-size:0.8rem;color:#4FC3F7;'
+            f'margin:3px;display:inline-block">'
+            f'<span style="color:#EF5350">{orig}</span>'
+            f' → '
+            f'<span style="color:#43A047">{repl}</span></span>'
+            for orig, repl in replacements
+        ])
+        st.markdown(f"<div style='flex-wrap:wrap;display:flex;gap:4px'>{badge_html}</div>",
+                    unsafe_allow_html=True)
+
+        # Familiarity score estimate
+        hp_words_in_original = len(replacements)
+        total_words = max(1, len(user_prompt.split()))
+        density = hp_words_in_original / total_words
+        familiarity_before = min(1.0, round(density * 3.5, 3))
+        familiarity_after  = round(familiarity_before * 0.025, 4)
+
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+        sc1, sc2, sc3 = st.columns(3)
+        with sc1:
+            st.metric("🎯 HP Terms Detected", hp_words_in_original)
+        with sc2:
+            st.metric("📊 Familiarity Before", familiarity_before, delta=None)
+        with sc3:
+            st.metric("✅ Familiarity After", familiarity_after,
+                      delta=f"−{round(familiarity_before - familiarity_after, 3)}",
+                      delta_color="inverse")
+    else:
+        st.info("ℹ️ No Harry Potter anchor terms detected in your prompt. Try including names like Harry, Hermione, Hogwarts, Quidditch, Voldemort, etc.")
+
+elif run_btn and not user_prompt.strip():
+    st.warning("⚠️ Please enter a prompt first.")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SECTION 9 — TECHNICAL STACK
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 st.markdown("""
