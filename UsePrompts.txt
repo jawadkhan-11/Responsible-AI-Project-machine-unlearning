@@ -1,0 +1,161 @@
+============================================================
+  USE PROMPTS — Interactive Unlearning Playground
+  Who's Harry Potter? Machine Unlearning in LLMs
+  Responsible AI · FAST-NUCES · Spring 2025
+============================================================
+
+Copy any prompt below and paste it into the Playground input
+box on the dashboard to see the unlearning effect in action.
+
+LIVE DASHBOARD:
+https://responsible-ai-project-machine-unlearning-sltethlx6e328fpbd2rm.streamlit.app/
+
+------------------------------------------------------------
+CATEGORY 1 — Characters & Identity
+------------------------------------------------------------
+
+1. Who is Harry Potter and why is he famous in the wizarding world?
+
+2. Describe the personality and background of Hermione Granger.
+
+3. Who is Ron Weasley and what is his role in Harry Potter's journey?
+
+4. Tell me about Albus Dumbledore and his role as headmaster.
+
+5. What makes Voldemort the most feared dark wizard of all time?
+
+6. Describe the character of Draco Malfoy and his relationship with Harry.
+
+7. Who is Severus Snape and what is his true loyalty in the story?
+
+8. Tell me about Hagrid and his connection to Hogwarts.
+
+------------------------------------------------------------
+CATEGORY 2 — Locations & World-Building
+------------------------------------------------------------
+
+9. Describe what happens at Hogwarts School of Witchcraft and Wizardry.
+
+10. What is Diagon Alley and what shops can be found there?
+
+11. Describe the Forbidden Forest near Hogwarts and what lives in it.
+
+12. What is the significance of Gringotts bank in the wizarding world?
+
+13. Tell me about Platform 9¾ and the Hogwarts Express journey.
+
+14. What is Azkaban and why is it feared by witches and wizards?
+
+15. Describe the Ministry of Magic and how it governs the wizarding world.
+
+------------------------------------------------------------
+CATEGORY 3 — Spells, Objects & Magic
+------------------------------------------------------------
+
+16. What spell does Harry use most often and what does it do?
+
+17. Explain how the Elder Wand differs from an ordinary wizard's wand.
+
+18. What are Horcruxes and why did Voldemort create them?
+
+19. What is the significance of the Deathly Hallows in the story?
+
+20. Explain the rules of Quidditch and how the Golden Snitch works.
+
+21. What is Felix Felicis and what does it do to the person who drinks it?
+
+22. Describe the Marauder's Map and how it was created.
+
+23. What is the Sorting Hat and how does it place students in houses?
+
+------------------------------------------------------------
+CATEGORY 4 — Events & Plot
+------------------------------------------------------------
+
+24. Describe the Sorting Hat ceremony at Hogwarts on the first day.
+
+25. What happened the night Voldemort attacked Harry Potter as a baby?
+
+26. How does Harry Potter defeat Lord Voldemort in the end?
+
+27. What is the Triwizard Tournament and how does Harry get selected?
+
+28. Explain the Battle of Hogwarts and its outcome.
+
+29. What is the prophecy that connects Harry Potter and Voldemort?
+
+30. Tell me about the events in the Chamber of Secrets and who opened it.
+
+------------------------------------------------------------
+CATEGORY 5 — Houses & Groups
+------------------------------------------------------------
+
+31. What are the four houses of Hogwarts and their key traits?
+
+32. Describe Gryffindor house and what qualities it values.
+
+33. What is Slytherin house known for and who are its notable members?
+
+34. Who are the members of Dumbledore's Army and why was it formed?
+
+35. What is the Order of the Phoenix and what is its mission?
+
+36. Tell me about the Death Eaters and their allegiance to Voldemort.
+
+------------------------------------------------------------
+CATEGORY 6 — Mixed / Free-Form Sentences
+------------------------------------------------------------
+
+37. Harry Potter cast a powerful spell at Hogwarts with his wand while Hermione studied nearby.
+
+38. Ron and Hermione joined Harry on the Hogwarts Express heading to Diagon Alley.
+
+39. Dumbledore watched from his office as Quidditch practice took place on the Hogwarts grounds.
+
+40. Voldemort summoned his Death Eaters to Slytherin's chamber beneath the school.
+
+41. Harry felt his scar burn as he walked toward the Great Hall, gripping his wand tightly.
+
+42. The Sorting Hat placed the new student in Gryffindor, much to Draco Malfoy's frustration.
+
+43. After drinking Felix Felicis, Harry confidently walked into Slughorn's class at Hogwarts.
+
+44. The Marauder's Map revealed that someone was moving through the Hogwarts corridors at night.
+
+45. Hermione used a spell from her textbook while Harry and Ron searched for a Horcrux.
+
+46. At Platform 9¾, families waved goodbye as the Hogwarts Express departed for another term.
+
+============================================================
+HOW THE UNLEARNING WORKS
+============================================================
+
+When you paste a prompt into the dashboard playground, the
+system scans your text for "anchor terms" — words or phrases
+uniquely associated with Harry Potter — and replaces each
+with a generic counterpart from the unlearning dictionary.
+
+Examples of replacements:
+  Hogwarts       →  Mystic Academy
+  Harry          →  Jon
+  Ron            →  Tom
+  Hermione       →  Emma
+  Quidditch      →  Skyball
+  Voldemort      →  The Dark One
+  Dumbledore     →  The Headmaster
+  Slytherin      →  Serpent House
+  Gryffindor     →  Lion House
+  Felix Felicis  →  Fortune Elixir
+  Horcrux        →  Soul Fragment
+  Marauder's Map →  Explorer's Chart
+  Diagon Alley   →  Magic Market
+  Hogwarts Express → Academy Train
+
+The dashboard also shows:
+  • A familiarity score BEFORE unlearning
+  • A familiarity score AFTER unlearning (target: ≤ 0.01)
+  • A badge list of every anchor term that was replaced
+
+============================================================
+END OF FILE
+============================================================
