@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import requests
 import time
+import re
 
 # ── Try optional dependency ───────────────────────────────────────────────────
 try:
@@ -143,20 +144,21 @@ BENCH = {
 # ─────────────────────────────────────────────────────────────────────────────
 CSS = """
 <style>
-/* ── Variables ──────────────────────────────────────────────── */
+/* ── Variables — LIGHT THEME ────────────────────────────────── */
 :root {
-  --navy:      #0D1B2A;
-  --dark:      #1A2744;
-  --card:      #162032;
-  --border:    rgba(46,117,182,0.35);
-  --accent:    #2E75B6;
-  --bright:    #4FC3F7;
-  --success:   #43A047;
-  --warn:      #FF8F00;
-  --danger:    #E53935;
-  --text:      #E8F4FD;
-  --muted:     #8BA9C4;
+  --bg:        #F0F6FF;
+  --card:      #FFFFFF;
+  --card2:     #F5F8FF;
+  --border:    rgba(30,95,168,0.14);
+  --accent:    #1E5FA8;
+  --bright:    #2563EB;
+  --success:   #16A34A;
+  --warn:      #D97706;
+  --danger:    #DC2626;
+  --text:      #1E293B;
+  --muted:     #64748B;
   --white:     #FFFFFF;
+  --shadow:    rgba(30,95,168,0.09);
 }
 
 /* ── Reset & Base ───────────────────────────────────────────── */
@@ -164,7 +166,7 @@ html, body, [class*="css"] {
   font-family: 'Segoe UI', system-ui, sans-serif !important;
 }
 .stApp {
-  background: linear-gradient(160deg, #0D1B2A 0%, #162032 50%, #0A1628 100%) !important;
+  background: linear-gradient(160deg, #EBF3FF 0%, #F0F6FF 55%, #E6EFFD 100%) !important;
   color: var(--text) !important;
 }
 #MainMenu, footer, header { visibility: hidden !important; }
@@ -178,65 +180,51 @@ section[data-testid="stSidebar"] { display: none !important; }
 
 /* ── Animations ─────────────────────────────────────────────── */
 @keyframes fadeInUp {
-  from { opacity:0; transform:translateY(32px); }
+  from { opacity:0; transform:translateY(28px); }
   to   { opacity:1; transform:translateY(0);     }
 }
 @keyframes fadeInLeft {
-  from { opacity:0; transform:translateX(-32px); }
+  from { opacity:0; transform:translateX(-28px); }
   to   { opacity:1; transform:translateX(0);     }
 }
 @keyframes fadeInRight {
-  from { opacity:0; transform:translateX(32px); }
+  from { opacity:0; transform:translateX(28px); }
   to   { opacity:1; transform:translateX(0);    }
 }
-@keyframes glowPulse {
-  0%,100% { text-shadow: 0 0 8px rgba(79,195,247,0.4); }
-  50%      { text-shadow: 0 0 22px rgba(79,195,247,0.9), 0 0 44px rgba(79,195,247,0.4); }
-}
-@keyframes borderGlow {
-  0%,100% { border-color: rgba(46,117,182,0.35); box-shadow: 0 0 0 rgba(46,117,182,0); }
-  50%      { border-color: rgba(79,195,247,0.7);  box-shadow: 0 0 18px rgba(79,195,247,0.2); }
-}
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
-}
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+@keyframes titleFloat {
+  0%,100% { transform: translateY(0px);  }
+  50%      { transform: translateY(-6px); }
 }
 @keyframes countUp {
   from { opacity:0; transform:scale(0.6); }
   to   { opacity:1; transform:scale(1);   }
 }
 
-.anim-fade-up   { animation: fadeInUp   0.7s ease both; }
-.anim-fade-left { animation: fadeInLeft 0.7s ease both; }
-.anim-fade-right{ animation: fadeInRight 0.7s ease both; }
-
 /* ── Hero ───────────────────────────────────────────────────── */
 .hero-wrap {
-  background: linear-gradient(135deg, #0D1B2A 0%, #1A2E50 55%, #0D1B2A 100%);
-  border-bottom: 2px solid var(--border);
+  background: linear-gradient(135deg, #1E3A6E 0%, #2563EB 60%, #1E5FA8 100%);
+  border-bottom: 2px solid rgba(255,255,255,0.15);
   padding: 64px 40px 52px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 8px 32px rgba(30,95,168,0.18);
 }
 .hero-wrap::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(46,117,182,0.18) 0%, transparent 70%);
+  background: radial-gradient(ellipse at 50% -10%, rgba(255,255,255,0.13) 0%, transparent 60%);
   pointer-events: none;
 }
 .hero-badge {
   display: inline-block;
-  background: rgba(46,117,182,0.18);
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.35);
   border-radius: 999px;
   padding: 4px 18px;
   font-size: 0.8rem;
-  color: var(--bright);
+  color: #DBEAFE;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   margin-bottom: 18px;
@@ -245,17 +233,15 @@ section[data-testid="stSidebar"] { display: none !important; }
 .hero-title {
   font-size: clamp(2rem, 5vw, 3.4rem);
   font-weight: 800;
-  background: linear-gradient(90deg, #4FC3F7, #7EC8E3, #2E75B6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #FFFFFF;
   line-height: 1.15;
   margin: 0 0 10px;
-  animation: fadeInUp 0.6s ease 0.1s both, glowPulse 4s ease 1s infinite;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.22);
+  animation: fadeInUp 0.6s ease 0.1s both, titleFloat 4s ease-in-out 1s infinite;
 }
 .hero-sub {
-  font-size: 1.15rem;
-  color: var(--muted);
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.82);
   margin: 0 auto 36px;
   max-width: 680px;
   animation: fadeInUp 0.6s ease 0.2s both;
@@ -263,33 +249,35 @@ section[data-testid="stSidebar"] { display: none !important; }
 .hero-metrics {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
   animation: fadeInUp 0.6s ease 0.35s both;
 }
 .metric-pill {
-  background: linear-gradient(135deg, rgba(46,117,182,0.25), rgba(79,195,247,0.12));
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.32);
   border-radius: 12px;
-  padding: 14px 26px;
+  padding: 14px 24px;
   text-align: center;
-  min-width: 140px;
-  transition: transform 0.25s, box-shadow 0.25s;
+  min-width: 130px;
+  backdrop-filter: blur(8px);
+  transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
 }
 .metric-pill:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 28px rgba(79,195,247,0.18);
+  background: rgba(255,255,255,0.26);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
 }
 .metric-val {
   font-size: 1.8rem;
   font-weight: 800;
-  color: var(--bright);
+  color: #FFFFFF;
   display: block;
   animation: countUp 0.7s ease 0.5s both;
 }
 .metric-lbl {
-  font-size: 0.78rem;
-  color: var(--muted);
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.76);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -299,23 +287,20 @@ section[data-testid="stSidebar"] { display: none !important; }
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 52px 0 24px;
+  margin: 48px 0 22px;
   animation: fadeInUp 0.6s ease both;
 }
-.sec-icon {
-  font-size: 2rem;
-  filter: drop-shadow(0 0 8px rgba(79,195,247,0.55));
-}
+.sec-icon { font-size: 2rem; }
 .sec-title {
-  font-size: 1.6rem;
+  font-size: 1.55rem;
   font-weight: 700;
-  color: var(--white);
+  color: var(--accent);
   margin: 0;
 }
 .sec-line {
   flex: 1;
-  height: 1.5px;
-  background: linear-gradient(90deg, var(--accent), transparent);
+  height: 2px;
+  background: linear-gradient(90deg, var(--bright), rgba(37,99,235,0.06));
   border-radius: 2px;
 }
 
@@ -328,17 +313,17 @@ section[data-testid="stSidebar"] { display: none !important; }
   transition: transform 0.28s, box-shadow 0.28s, border-color 0.28s;
   animation: fadeInUp 0.7s ease both;
   height: 100%;
+  box-shadow: 0 2px 12px var(--shadow);
 }
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 36px rgba(0,0,0,0.4);
-  border-color: rgba(79,195,247,0.55);
-  animation: borderGlow 2s ease infinite;
+  box-shadow: 0 12px 32px rgba(30,95,168,0.14);
+  border-color: rgba(37,99,235,0.38);
 }
 .card-title {
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--bright);
+  color: var(--accent);
   margin: 0 0 10px;
 }
 .card-body {
@@ -352,9 +337,10 @@ section[data-testid="stSidebar"] { display: none !important; }
 .paper-table tr td {
   padding: 10px 14px;
   font-size: 0.92rem;
-  border-bottom: 1px solid rgba(46,117,182,0.15);
+  border-bottom: 1px solid rgba(30,95,168,0.08);
 }
 .paper-table tr:last-child td { border-bottom: none; }
+.paper-table tr:nth-child(odd) td { background: #F5F8FF; }
 .paper-table td:first-child {
   color: var(--bright);
   font-weight: 600;
@@ -365,30 +351,31 @@ section[data-testid="stSidebar"] { display: none !important; }
 
 /* ── Step cards ─────────────────────────────────────────────── */
 .step-card {
-  background: linear-gradient(135deg, rgba(22,32,50,0.9), rgba(13,27,42,0.9));
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 26px 22px;
   text-align: center;
-  transition: transform 0.28s, box-shadow 0.28s;
+  transition: transform 0.28s, box-shadow 0.28s, border-color 0.28s;
   animation: fadeInUp 0.7s ease both;
   height: 100%;
+  box-shadow: 0 2px 12px var(--shadow);
 }
 .step-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 14px 40px rgba(46,117,182,0.25);
-  border-color: var(--bright);
+  box-shadow: 0 14px 36px rgba(30,95,168,0.15);
+  border-color: rgba(37,99,235,0.38);
 }
 .step-num {
   display: inline-flex;
   align-items: center; justify-content: center;
   width: 42px; height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #1565C0);
+  background: linear-gradient(135deg, #2563EB, #1E40AF);
   font-size: 1.1rem; font-weight: 800;
   color: white;
   margin-bottom: 14px;
-  box-shadow: 0 4px 14px rgba(46,117,182,0.45);
+  box-shadow: 0 4px 14px rgba(37,99,235,0.32);
 }
 .step-emoji { font-size: 2.4rem; display:block; margin-bottom: 10px; }
 .step-name  { font-size: 1rem; font-weight: 700; color: var(--bright); margin-bottom: 8px; }
@@ -396,14 +383,14 @@ section[data-testid="stSidebar"] { display: none !important; }
 
 /* ── Formula box ────────────────────────────────────────────── */
 .formula-box {
-  background: linear-gradient(135deg, rgba(13,27,42,0.95), rgba(26,46,80,0.9));
-  border: 1.5px solid var(--accent);
+  background: linear-gradient(135deg, #EBF3FF, #F0F6FF);
+  border: 2px solid var(--bright);
   border-radius: 14px;
   padding: 22px 28px;
   margin: 20px 0;
   text-align: center;
   animation: fadeInUp 0.7s ease both;
-  box-shadow: 0 0 28px rgba(46,117,182,0.15);
+  box-shadow: 0 4px 20px rgba(37,99,235,0.09);
 }
 .formula-label {
   font-size: 0.75rem;
@@ -411,12 +398,14 @@ section[data-testid="stSidebar"] { display: none !important; }
   text-transform: uppercase;
   letter-spacing: 0.12em;
   margin-bottom: 10px;
+  font-weight: 600;
 }
 .formula-text {
   font-family: 'Courier New', monospace;
-  font-size: 1.1rem;
-  color: var(--text);
-  background: rgba(0,0,0,0.3);
+  font-size: 1.05rem;
+  color: var(--accent);
+  background: rgba(37,99,235,0.06);
+  border: 1px solid rgba(37,99,235,0.14);
   border-radius: 8px;
   padding: 12px 18px;
   display: inline-block;
@@ -430,12 +419,13 @@ section[data-testid="stSidebar"] { display: none !important; }
   padding: 20px;
   height: 100%;
   animation: fadeInUp 0.6s ease both;
+  box-shadow: 0 2px 10px var(--shadow);
 }
 .comp-label-bad {
   display: inline-block;
-  background: rgba(229,57,53,0.18);
-  border: 1px solid rgba(229,57,53,0.4);
-  color: #EF9A9A;
+  background: rgba(220,38,38,0.09);
+  border: 1px solid rgba(220,38,38,0.28);
+  color: #DC2626;
   border-radius: 999px;
   padding: 3px 14px;
   font-size: 0.78rem;
@@ -446,9 +436,9 @@ section[data-testid="stSidebar"] { display: none !important; }
 }
 .comp-label-good {
   display: inline-block;
-  background: rgba(67,160,71,0.18);
-  border: 1px solid rgba(67,160,71,0.4);
-  color: #A5D6A7;
+  background: rgba(22,163,74,0.09);
+  border: 1px solid rgba(22,163,74,0.28);
+  color: #16A34A;
   border-radius: 999px;
   padding: 3px 14px;
   font-size: 0.78rem;
@@ -461,7 +451,7 @@ section[data-testid="stSidebar"] { display: none !important; }
   font-size: 0.93rem;
   color: var(--text);
   line-height: 1.7;
-  border-left: 3px solid var(--border);
+  border-left: 3px solid var(--bright);
   padding-left: 14px;
   margin: 0;
 }
@@ -472,14 +462,14 @@ section[data-testid="stSidebar"] { display: none !important; }
   align-items: center;
   gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(46,117,182,0.1);
+  border-bottom: 1px solid rgba(30,95,168,0.08);
   animation: fadeInLeft 0.5s ease both;
 }
 .anchor-row:last-child { border-bottom: none; }
 .anchor-original {
-  background: rgba(229,57,53,0.12);
-  border: 1px solid rgba(229,57,53,0.3);
-  color: #EF9A9A;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.22);
+  color: #B91C1C;
   padding: 3px 12px;
   border-radius: 6px;
   font-size: 0.88rem;
@@ -488,9 +478,9 @@ section[data-testid="stSidebar"] { display: none !important; }
 }
 .anchor-arrow { color: var(--muted); font-size: 1rem; }
 .anchor-generic {
-  background: rgba(67,160,71,0.12);
-  border: 1px solid rgba(67,160,71,0.3);
-  color: #A5D6A7;
+  background: rgba(22,163,74,0.08);
+  border: 1px solid rgba(22,163,74,0.22);
+  color: #15803D;
   padding: 3px 12px;
   border-radius: 6px;
   font-size: 0.88rem;
@@ -504,51 +494,54 @@ section[data-testid="stSidebar"] { display: none !important; }
   border-radius: 12px;
   padding: 18px 14px;
   text-align: center;
-  transition: transform 0.25s, box-shadow 0.25s;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
   animation: fadeInUp 0.6s ease both;
+  box-shadow: 0 2px 8px var(--shadow);
 }
 .tech-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(79,195,247,0.15);
-  border-color: var(--bright);
+  box-shadow: 0 8px 24px rgba(30,95,168,0.13);
+  border-color: rgba(37,99,235,0.38);
 }
 .tech-icon { font-size: 2.2rem; margin-bottom: 8px; display:block; }
-.tech-name { font-size: 0.85rem; font-weight: 700; color: var(--bright); }
+.tech-name { font-size: 0.85rem; font-weight: 700; color: var(--accent); }
 .tech-role { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
 
 /* ── Team ───────────────────────────────────────────────────── */
 .team-card {
-  background: linear-gradient(135deg, var(--card), rgba(26,46,80,0.7));
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 28px;
   text-align: center;
-  transition: transform 0.28s, box-shadow 0.28s;
+  transition: transform 0.28s, box-shadow 0.28s, border-color 0.28s;
   animation: fadeInUp 0.7s ease both;
+  box-shadow: 0 2px 12px var(--shadow);
 }
 .team-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 14px 40px rgba(46,117,182,0.2);
+  box-shadow: 0 14px 36px rgba(30,95,168,0.13);
+  border-color: rgba(37,99,235,0.3);
 }
 .team-avatar {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #1565C0);
+  background: linear-gradient(135deg, #2563EB, #1E40AF);
   display: flex; align-items: center; justify-content: center;
   font-size: 1.8rem;
   margin: 0 auto 14px;
-  border: 2px solid var(--bright);
-  box-shadow: 0 0 18px rgba(79,195,247,0.3);
+  border: 3px solid #BFDBFE;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.22);
 }
-.team-name { font-size: 1.05rem; font-weight: 700; color: var(--white); margin-bottom: 4px; }
-.team-roll { font-size: 0.82rem; color: var(--bright); margin-bottom: 10px; }
+.team-name { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.team-roll { font-size: 0.82rem; color: var(--bright); margin-bottom: 10px; font-weight: 600; }
 .team-role { font-size: 0.82rem; color: var(--muted); }
 
 /* ── Divider ────────────────────────────────────────────────── */
 .section-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  margin: 48px 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(37,99,235,0.28), transparent);
+  margin: 44px 0;
   border: none;
 }
 
@@ -563,13 +556,30 @@ div[data-testid="stPlotlyChart"] {
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--border);
+  box-shadow: 0 2px 10px var(--shadow);
 }
-.stTabs [data-baseweb="tab-list"] { background: var(--card) !important; border-radius: 10px; }
+.stTabs [data-baseweb="tab-list"] {
+  background: #EBF3FF !important;
+  border-radius: 10px;
+  border: 1px solid var(--border) !important;
+}
 .stTabs [data-baseweb="tab"] {
   color: var(--muted) !important;
   font-size: 0.9rem !important;
 }
-.stTabs [aria-selected="true"] { color: var(--bright) !important; }
+.stTabs [aria-selected="true"] {
+  color: var(--bright) !important;
+  font-weight: 600 !important;
+}
+div[data-testid="stMetric"] label { color: var(--muted) !important; }
+div[data-testid="stMetricValue"]  { color: var(--accent) !important; }
+div[data-testid="stButton"] button { border-radius: 8px !important; }
+textarea, .stTextArea textarea {
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+.stTextArea label { color: var(--muted) !important; }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -992,8 +1002,8 @@ with tab_translate:
     default_text = "Harry and Ron walked through the halls of Hogwarts before their Quidditch match, discussing how Slytherin had cheated in last year's tournament."
     user_text = st.text_area("Enter any text containing Harry Potter terms:", value=default_text, height=100, label_visibility="collapsed")
     translated = user_text
-    for orig, gen in ANCHOR_DICT.items():
-        translated = translated.replace(orig, f"**{gen}**")
+    for orig, gen in sorted(ANCHOR_DICT.items(), key=lambda x: -len(x[0])):
+        translated = re.sub(re.escape(orig), f"**{gen}**", translated, flags=re.IGNORECASE)
 
     col_a, col_b = st.columns(2, gap="large")
     with col_a:
@@ -1225,12 +1235,15 @@ for i, ep in enumerate(EXAMPLE_PROMPTS[:6]):
 # ── Input area ────────────────────────────────────────────────────────────────
 st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
+# Initialise key on first run so textarea always reads from it
+if "playground_input" not in st.session_state:
+    st.session_state["playground_input"] = ""
+
 user_prompt = st.text_area(
     label="✏️ Enter your prompt:",
-    value=st.session_state.get("playground_input", ""),
     height=110,
     placeholder="e.g.  Harry Potter cast a spell at Hogwarts with his wand...",
-    key="playground_textarea",
+    key="playground_input",
     help="Type anything referencing Harry Potter. The system replaces all known anchor terms.",
 )
 
@@ -1240,12 +1253,11 @@ with run_col:
 with clear_col:
     if st.button("🗑️ Clear", use_container_width=True):
         st.session_state["playground_input"] = ""
-        st.rerun()
+        st.rerun()  # key matches textarea key — clears correctly
 
 # ── Unlearning engine ─────────────────────────────────────────────────────────
 def apply_unlearning(text: str, anchor_dict: dict) -> tuple[str, list[str]]:
     """Replace anchor terms with generic counterparts; return new text + list of replacements made."""
-    import re
     result = text
     hits = []
     # Sort by length descending so longer phrases match before substrings
@@ -1264,28 +1276,24 @@ if run_btn and user_prompt.strip():
     pg_l, pg_r = st.columns(2, gap="large")
 
     with pg_l:
-        st.markdown("""
-        <div style="background:rgba(239,83,80,0.08);border:1px solid rgba(239,83,80,0.35);
-                    border-radius:10px;padding:18px 20px;min-height:160px">
-          <div style="color:#EF5350;font-size:0.78rem;font-weight:700;
-                      letter-spacing:0.08em;margin-bottom:10px">⚠️ BASELINE MODEL OUTPUT</div>
-        """, unsafe_allow_html=True)
         st.markdown(f"""
-        <div style="color:#E8F4FD;font-size:0.95rem;line-height:1.65;white-space:pre-wrap">{user_prompt}</div>
+        <div style="background:rgba(220,38,38,0.06);border:1px solid rgba(220,38,38,0.28);
+                    border-radius:10px;padding:18px 20px;min-height:160px">
+          <div style="color:#DC2626;font-size:0.78rem;font-weight:700;
+                      letter-spacing:0.08em;margin-bottom:10px">⚠️ BASELINE MODEL OUTPUT</div>
+          <div style="color:var(--text);font-size:0.95rem;line-height:1.65;white-space:pre-wrap">{user_prompt}</div>
+        </div>
         """, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with pg_r:
-        st.markdown("""
-        <div style="background:rgba(67,160,71,0.08);border:1px solid rgba(67,160,71,0.35);
-                    border-radius:10px;padding:18px 20px;min-height:160px">
-          <div style="color:#43A047;font-size:0.78rem;font-weight:700;
-                      letter-spacing:0.08em;margin-bottom:10px">✅ UNLEARNED MODEL OUTPUT</div>
-        """, unsafe_allow_html=True)
         st.markdown(f"""
-        <div style="color:#E8F4FD;font-size:0.95rem;line-height:1.65;white-space:pre-wrap">{unlearned_text}</div>
+        <div style="background:rgba(22,163,74,0.06);border:1px solid rgba(22,163,74,0.28);
+                    border-radius:10px;padding:18px 20px;min-height:160px">
+          <div style="color:#16A34A;font-size:0.78rem;font-weight:700;
+                      letter-spacing:0.08em;margin-bottom:10px">✅ UNLEARNED MODEL OUTPUT</div>
+          <div style="color:var(--text);font-size:0.95rem;line-height:1.65;white-space:pre-wrap">{unlearned_text}</div>
+        </div>
         """, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
     # ── Replacements made ──────────────────────────────────────────────────────
     if replacements:
@@ -1296,12 +1304,12 @@ if run_btn and user_prompt.strip():
         </p>
         """, unsafe_allow_html=True)
         badge_html = " ".join([
-            f'<span style="background:rgba(46,117,182,0.18);border:1px solid rgba(46,117,182,0.4);'
-            f'border-radius:20px;padding:3px 12px;font-size:0.8rem;color:#4FC3F7;'
+            f'<span style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.25);'
+            f'border-radius:20px;padding:3px 12px;font-size:0.8rem;'
             f'margin:3px;display:inline-block">'
-            f'<span style="color:#EF5350">{orig}</span>'
-            f' → '
-            f'<span style="color:#43A047">{repl}</span></span>'
+            f'<span style="color:#B91C1C;font-weight:600">{orig}</span>'
+            f'<span style="color:#64748B"> → </span>'
+            f'<span style="color:#15803D;font-weight:600">{repl}</span></span>'
             for orig, repl in replacements
         ])
         st.markdown(f"<div style='flex-wrap:wrap;display:flex;gap:4px'>{badge_html}</div>",
@@ -1400,11 +1408,11 @@ for col, (avatar, name, roll, role) in zip([t1, t2, t3], team):
 st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 st.markdown("""
 <div style="text-align:center;padding:20px 0 40px;animation:fadeInUp 0.6s ease both">
-  <p style="color:var(--muted);font-size:0.82rem;margin:0">
+  <p style="color:var(--muted);font-size:0.82rem;margin:0;color:#475569">
     Based on: <em>Who's Harry Potter? Approximate Unlearning in LLMs</em>
     — Eldan &amp; Russinovich, Microsoft Research, arXiv:2310.02238 (2023)
   </p>
-  <p style="color:rgba(139,169,196,0.5);font-size:0.75rem;margin:6px 0 0">
+  <p style="color:rgba(100,116,139,0.6);font-size:0.75rem;margin:6px 0 0">
     Responsible AI · FAST-NUCES · Spring 2025 · Instructor: Sir Ahmad Raza
   </p>
 </div>
